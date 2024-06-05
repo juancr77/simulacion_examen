@@ -1,0 +1,119 @@
+from flask import Flask, request, render_template, redirect, url_for, session, flash
+from sqlalchemy.orm import scoped_session
+from models.model import Database, Student, Question, Option, Answer, Resultado
+from sqlalchemy.exc import IntegrityError
+import re
+
+app = Flask(__name__)
+app.secret_key = 'tu_clave_secreta'
+db_session = scoped_session(Database.get_session)
+
+@app.route('/')
+def home():
+    return render_template('register.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    first_name = request.form['first_name']
+    last_name = request.form['last_name']
+    email = request.form['email']
+
+    # Validate input
+    if not first_name or not last_name or not email:
+        flash("All fields are required.", "error")
+        return redirect(url_for('home'))
+    
+    if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+        flash("Invalid email address.", "error")
+        return redirect(url_for('home'))
+
+    new_student = Student(first_name=first_name, last_name=last_name, email=email)
+
+    try:
+        db_session.add(new_student)
+        db_session.commit()
+
+        session['student_id'] = new_student.student_id
+        session['attempt_count'] = 0  # Initialize the attempt counter
+
+        flash("Registration successful!", "success")
+        return redirect(url_for('menu'))
+
+    except IntegrityError as e:
+        db_session.rollback()
+        flash("Email is already registered.", "error")
+        return redirect(url_for('home'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        
+        student = db_session.query(Student).filter_by(email=email).first()
+        if student:
+            session['student_id'] = student.student_id
+            flash("Login successful!", "success")
+            return redirect(url_for('menu'))
+        else:
+            flash("Email not found.", "error")
+            return redirect(url_for('login'))
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash("Logged out successfully.", "success")
+    return redirect(url_for('home'))
+
+@app.route('/menu')
+def menu():
+    if 'student_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('menu.html')
+
+@app.route('/quiz', methods=['GET', 'POST'])
+def quiz():
+    if 'student_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        question_id = request.form['question_id']
+        selected_option_id = request.form['option']
+
+        # Save the answer
+        new_answer = Answer(
+            student_id=session['student_id'],
+            question_id=question_id,
+            selected_option_id=selected_option_id
+        )
+        db_session.add(new_answer)
+        db_session.commit()
+
+        # Move to the next question
+        next_question = db_session.query(Question).filter(Question.question_id > question_id).first()
+        if next_question:
+            return redirect(url_for('quiz', question_id=next_question.question_id))
+        else:
+            return redirect(url_for('menu'))
+
+    # Get the first question or the question specified
+    question_id = request.args.get('question_id')
+    if question_id:
+        question = db_session.query(Question).filter_by(question_id=question_id).first()
+    else:
+        question = db_session.query(Question).first()
+
+    if not question:
+        flash("No questions available.", "error")
+        return redirect(url_for('menu'))
+
+    options = db_session.query(Option).filter_by(question_id=question.question_id).all()
+    return render_template('quiz.html', question=question, options=options)
+
+@app.teardown_appcontext
+def remove_session(*args, **kwargs):
+    db_session.remove()
+
+if __name__ == '__main__':
+    app.run(debug=True)

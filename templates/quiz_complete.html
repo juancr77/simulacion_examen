@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Complete</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='quizstyle20.css') }}">
+    <script>
+        // Deshabilitar botón de retroceso
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', function(event) {
+            history.pushState(null, null, location.href);
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Quiz Complete</h1>
+    </header>
+    <main>
+        <p>You answered {{ correct_answers }} out of {{ total_questions }} questions correctly.</p>
+        <p>Your total points are: {{ total_points }} out of {{ total_questions * 5 }}</p>
+        <p>Your score is: {{ score_percentage }}%</p>
+        <p>Your level is: {{ nivel }}</p>
+        {% if aprobado %}
+            <p>Congratulations! You have passed at the {{ nivel }} level.</p>
+        {% else %}
+            <p>Unfortunately, you have not passed. Your level is {{ nivel }}.</p>
+        {% endif %}
+        <p>This was your attempt number {{ intentos }}.</p>
+        <button onclick="window.location.href='{{ url_for('menu') }}'">Back to Menu</button>
+        <button onclick="logout()">Logout and Return Home</button>
+    </main>
+    <footer>
+        <p>&copy; 2024 My Examen Simulacion 2024 Juan Cruz Perez</p>
+    </footer>
+    <script>
+        function logout() {
+            fetch('{{ url_for("logout") }}', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '{{ url_for("home") }}';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

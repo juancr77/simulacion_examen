@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados del Quiz</title>
+</head>
+<body>
+    <h1>Resultados del Quiz</h1>
+    <p>Tu puntaje total es: {{ correct_answers }} de {{ total_questions }}</p>
+    
+    {% if nivel %}
+        <p>Tu nivel es: {{ nivel }}</p>
+    {% endif %}
+    
+    <!-- Mensajes personalizados según el puntaje -->
+    {% if correct_answers <= 3 %}
+        <p>Tienes un puntaje bajo. ¡Sigue practicando!</p>
+    {% elif correct_answers <= 7 %}
+        <p>¡Buen trabajo! Estás en el camino correcto.</p>
+    {% else %}
+        <p>¡Felicidades! Tienes un excelente puntaje. ¡Eres un experto!</p>
+    {% endif %}
+    
+    <!-- Botón para regresar al menú -->
+    <form action="{{ url_for('menu') }}">
+        <button type="submit">Regresar al Menú</button>
+    </form>
+</body>
+</html>

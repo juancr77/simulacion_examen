@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='question.css') }}">
+    <script>
+        let timer;
+        function startTimer() {
+            let timeLeft = 60;
+            timer = setInterval(function() {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timeUp();
+                }
+            }, 1000);
+        }
+
+        function timeUp() {
+            fetch('{{ url_for("time_up") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_id: {{ session["student_id"] }},
+                    question_id: {{ question.question_id }}
+                })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '{{ url_for("show_question") }}';
+                }
+            });
+        }
+
+        window.onload = startTimer;
+
+        // Deshabilitar botón de retroceso
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', function(event) {
+            history.pushState(null, null, location.href);
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Question</h1>
+    </header>
+    <main>
+        <h2>Question {{ session['current_question_index'] + 1 }} of 20</h2>
+        <p>{{ question.question_text }}</p>
+        <p>Time left: <span id="timer">60</span> seconds</p>
+        <form action="{{ url_for('answer_question') }}" method="POST">
+            <input type="hidden" name="question_id" value="{{ question.question_id }}">
+            {% for option in options %}
+                <div class="option-container">
+                    <input type="radio" name="option" value="{{ option.option_id }}" id="option{{ option.option_id }}">
+                    <label for="option{{ option.option_id }}">{{ option.option_text }}</label>
+                </div>
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+    </main>
+    <footer>
+        <p>&copy; 2024 My Examen Simulacion 2024 Juan Cruz Perez</p>
+    </footer>
+</body>
+</html>

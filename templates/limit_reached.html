@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Límite de Intentos Alcanzado</title>
+</head>
+<body>
+    <h1>Has alcanzado el límite de intentos</h1>
+    <p>Lo sentimos, has alcanzado el límite de intentos para completar el cuestionario.</p>
+
+    <form action="{{ url_for('menu') }}">
+        <button onclick="logout()">Cerrar Sesión</button>
+        <button type="submit">Regresar al Menú</button>
+    </form>
+    <script>
+        function logout() {
+            fetch('{{ url_for("logout") }}', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '{{ url_for("home") }}';
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
